@@ -1,0 +1,106 @@
+[
+    {
+        "name": "Chambre Andreï",
+        "position": {
+            "x": -3,
+            "y": 0,
+            "z": 0
+        },
+        "size": {
+            "x": 3,
+            "y": 2,
+            "z": 3
+        }
+    },
+    {
+        "name": "Salon",
+        "position": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+        },
+        "size": {
+            "x": 5,
+            "y": 2,
+            "z": 3
+        }
+    },
+    {
+        "name": "Chambre Mia & Ial",
+        "position": {
+            "x": -3,
+            "y": 3,
+            "z": 0
+        },
+        "size": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+        }
+    },
+    {
+        "name": "Toilettes",
+        "position": {
+            "x": -1,
+            "y": 3,
+            "z": 0
+        },
+        "size": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+        }
+    },
+    {
+        "name": "Chambre Naëva",
+        "position": {
+            "x": 1,
+            "y": 3,
+            "z": 0
+        },
+        "size": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+        }
+    },
+    {
+        "name": "Chambre Nilo",
+        "position": {
+            "x": 3,
+            "y": 3,
+            "z": 0
+        },
+        "size": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+        }
+    },
+    {
+        "name": "Hellroom",
+        "position": {
+            "x": 0,
+            "y": 6,
+            "z": 0
+        },
+        "size": {
+            "x": 8,
+            "y": 2,
+            "z": 4
+        }
+    },
+    {
+        "name": "Jardin",
+        "position": {
+            "x": 9,
+            "y": 0,
+            "z": 0
+        },
+        "size": {
+            "x": 10,
+            "y": 0.1,
+            "z": 6
+        }
+    }
+]

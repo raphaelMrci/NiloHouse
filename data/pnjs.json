@@ -1,0 +1,72 @@
+[
+    {
+        "name": "Naëva",
+        "color": "#40E0D0",
+        "room": "Salon",
+        "position": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+        }
+    },
+    {
+        "name": "Simon",
+        "color": "#00FFFF",
+        "room": "Jardin",
+        "position": {
+            "x": 8,
+            "y": 1,
+            "z": 1
+        }
+    },
+    {
+        "name": "Isaac",
+        "color": "#00008B",
+        "room": "Jardin",
+        "position": {
+            "x": 9,
+            "y": 1,
+            "z": 0
+        }
+    },
+    {
+        "name": "Andreï",
+        "color": "#FFC0CB",
+        "room": "Toilettes",
+        "position": {
+            "x": -1,
+            "y": 3,
+            "z": 0
+        }
+    },
+    {
+        "name": "Ial",
+        "color": "#8DB600",
+        "room": "Chambre Ial",
+        "position": {
+            "x": -3,
+            "y": 3,
+            "z": 0
+        }
+    },
+    {
+        "name": "Clothilde",
+        "color": "#FFD700",
+        "room": "Hellroom",
+        "position": {
+            "x": -1,
+            "y": 6,
+            "z": 0
+        }
+    },
+    {
+        "name": "Valdim",
+        "color": "#800080",
+        "room": "Hellroom",
+        "position": {
+            "x": 0,
+            "y": 6,
+            "z": 0
+        }
+    }
+]

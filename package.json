@@ -1,0 +1,10 @@
+{
+    "main": "main.mjs",
+    "type": "module",
+    "scripts": {
+        "start": "electron ."
+    },
+    "devDependencies": {
+        "electron": "^29.3.0"
+    }
+}
