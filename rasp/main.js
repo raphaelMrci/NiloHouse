@@ -1,4 +1,4 @@
-import ws281x from "rpi-ws281x-native";
+import ws281xInit from "rpi-ws281x-native";
 import midi from "midi";
 
 // ====================== CONFIGURATION ======================
@@ -63,21 +63,22 @@ function hsvToRgb(h, s, v) {
 }
 
 // --- LED strip initialisation ------------------------------
-ws281x.configure({
-    freq: 800000,
+// The package exports a function that returns a CHANNEL object when
+// called: const channel = ws281x(numLeds, options)
+// Using it is the most compatible way across package versions.
+
+const channel = ws281xInit(LED_COUNT, {
     dma: 10,
-    channels: [
-        {
-            gpio: GPIO_PIN,
-            invert: false,
-            brightness: DEFAULT_BRIGHTNESS,
-            stripType: "grb", // Most WS2812 / NeoPixel strips use GRB
-            count: LED_COUNT,
-        },
-    ],
+    freq: 800000,
+    gpio: GPIO_PIN,
+    invert: false,
+    brightness: DEFAULT_BRIGHTNESS,
+    stripType: ws281xInit.stripType ? ws281xInit.stripType.WS2812 : "ws2812",
 });
-const pixelData = new Uint32Array(LED_COUNT).fill(0);
-ws281x.render(pixelData);
+
+const pixelData = channel.array; // Uint32Array representing LED colors
+pixelData.fill(0);
+ws281xInit.render();
 
 // --- MIDI input setup --------------------------------------
 const input = new midi.Input();
@@ -138,21 +139,21 @@ function turnOnLed(noteNumber, velocity) {
     const hue = (noteNumber % 12) / 12; // hue 0-1 based on octave note
     const brightness = velocity / 127; // scale velocity 0-1
     pixelData[ledIndex] = hsvToRgb(hue, 1, brightness);
-    ws281x.render(pixelData);
+    ws281xInit.render();
 }
 
 function turnOffLed(noteNumber) {
     const ledIndex = noteNumber % LED_COUNT;
     pixelData[ledIndex] = 0;
-    ws281x.render(pixelData);
+    ws281xInit.render();
 }
 
 // --- Graceful shutdown -------------------------------------
 function shutdown() {
     console.log("\nShutting down – clearing LEDs...");
     pixelData.fill(0);
-    ws281x.render(pixelData);
-    ws281x.reset();
+    ws281xInit.render();
+    ws281xInit.reset();
     input.closePort();
     process.exit(0);
 }
