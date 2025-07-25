@@ -1,6 +1,12 @@
 import ws281xInit from "rpi-ws281x-native";
 import midi from "midi";
 
+// Simple debug helper – disable by setting DEBUG=false in env
+const DEBUG_ENABLED = process.env.DEBUG !== "false";
+function debug(...args) {
+    if (DEBUG_ENABLED) console.log("[DEBUG]", ...args);
+}
+
 // ====================== CONFIGURATION ======================
 // Number of LEDs in your strip (can be overridden with LED_COUNT env var)
 const LED_COUNT = parseInt(process.env.LED_COUNT, 10) || 18;
@@ -9,6 +15,9 @@ const GPIO_PIN = parseInt(process.env.GPIO_PIN, 10) || 18;
 // Brightness (0-255)
 const DEFAULT_BRIGHTNESS = 255;
 // ===========================================================
+
+debug("Starting raspled script");
+debug("Config:", { LED_COUNT, GPIO_PIN, DEFAULT_BRIGHTNESS });
 
 // --- Helper utilities --------------------------------------
 function rgbToInt(r, g, b) {
@@ -80,6 +89,8 @@ const pixelData = channel.array; // Uint32Array representing LED colors
 pixelData.fill(0);
 ws281xInit.render();
 
+debug("LED driver initialised – array length", pixelData.length);
+
 // --- MIDI input setup --------------------------------------
 const input = new midi.Input();
 const portCount = input.getPortCount();
@@ -111,6 +122,8 @@ console.log(
 );
 console.log(`Controlling ${LED_COUNT} LEDs on GPIO ${GPIO_PIN}`);
 
+debug("Waiting for MIDI messages…");
+
 // Keep per-LED state so brightness and hue can be set independently
 const ledBrightness = Array(LED_COUNT).fill(0); // 0-1
 const ledHue = Array(LED_COUNT).fill(0); // 0-1
@@ -120,11 +133,13 @@ function applyLed(index) {
     const b = Math.max(0, Math.min(1, ledBrightness[index]));
     const h = ((ledHue[index] % 1) + 1) % 1; // wrap 0-1
     pixelData[index] = hsvToRgb(h, 1, b);
+    debug("applyLed", { index, hue: h.toFixed(3), brightness: b.toFixed(3) });
 }
 
 // --- MIDI message handler ----------------------------------
 input.on("message", (deltaTime, message) => {
     const [status, data1, data2] = message;
+    debug("MIDI message", { deltaTime, raw: message });
     const command = status & 0xf0;
 
     if (command === 0xb0) {
@@ -135,6 +150,7 @@ input.on("message", (deltaTime, message) => {
 
     switch (command) {
         case 0x90: // Note On (with velocity > 0)
+            debug("Note ON", { note: data1, velocity: data2 });
             if (data2 !== 0) {
                 turnOnLed(data1, data2);
             } else {
@@ -142,6 +158,7 @@ input.on("message", (deltaTime, message) => {
             }
             break;
         case 0x80: // Note Off
+            debug("Note OFF", { note: data1 });
             turnOffLed(data1);
             break;
         default:
@@ -150,13 +167,17 @@ input.on("message", (deltaTime, message) => {
 });
 
 function handleCC(cc, val) {
+    debug("CC received", { cc, val });
+
     // --- Brightness faders (CC 3-11) ----------------------
     if (cc >= 3 && cc <= 11) {
         const idx = cc - 3;
         if (idx < LED_COUNT) {
             ledBrightness[idx] = val / 127;
+            debug(`Brightness set LED ${idx} ->`, val / 127);
             applyLed(idx);
             ws281xInit.render();
+            debug("Rendered strip");
         }
         return;
     }
@@ -166,8 +187,10 @@ function handleCC(cc, val) {
         const idx = cc - 14;
         if (idx < LED_COUNT) {
             ledHue[idx] = val / 127; // 0-1
+            debug(`Hue set LED ${idx} ->`, val / 127);
             applyLed(idx);
             ws281xInit.render();
+            debug("Rendered strip");
         }
         return;
     }
@@ -180,8 +203,10 @@ function handleCC(cc, val) {
         buttonStates.set(key, next);
         if (idx < LED_COUNT) {
             ledBrightness[idx] = next ? 1 : 0;
+            debug(`Toggle LED ${idx} ->`, next);
             applyLed(idx);
             ws281xInit.render();
+            debug("Rendered strip");
         }
         return;
     }
@@ -194,6 +219,7 @@ function turnOnLed(noteNumber, velocity) {
     ledBrightness[ledIndex] = velocity / 127;
     applyLed(ledIndex);
     ws281xInit.render();
+    debug("Rendered strip");
 }
 
 function turnOffLed(noteNumber) {
@@ -201,6 +227,7 @@ function turnOffLed(noteNumber) {
     ledBrightness[ledIndex] = 0;
     applyLed(ledIndex);
     ws281xInit.render();
+    debug("Rendered strip");
 }
 
 // --- Graceful shutdown -------------------------------------
@@ -208,6 +235,7 @@ function shutdown() {
     console.log("\nShutting down – clearing LEDs...");
     pixelData.fill(0);
     ws281xInit.render();
+    debug("Rendered strip (shutdown)");
     ws281xInit.reset();
     input.closePort();
     process.exit(0);
