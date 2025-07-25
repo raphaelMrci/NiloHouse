@@ -111,41 +111,95 @@ console.log(
 );
 console.log(`Controlling ${LED_COUNT} LEDs on GPIO ${GPIO_PIN}`);
 
+// Keep per-LED state so brightness and hue can be set independently
+const ledBrightness = Array(LED_COUNT).fill(0); // 0-1
+const ledHue = Array(LED_COUNT).fill(0); // 0-1
+const buttonStates = new Map();
+
+function applyLed(index) {
+    const b = Math.max(0, Math.min(1, ledBrightness[index]));
+    const h = ((ledHue[index] % 1) + 1) % 1; // wrap 0-1
+    pixelData[index] = hsvToRgb(h, 1, b);
+}
+
 // --- MIDI message handler ----------------------------------
 input.on("message", (deltaTime, message) => {
     const [status, data1, data2] = message;
-    console.log(message);
     const command = status & 0xf0;
+
+    if (command === 0xb0) {
+        // Control Change => faders/knobs/buttons
+        handleCC(data1, data2);
+        return;
+    }
 
     switch (command) {
         case 0x90: // Note On (with velocity > 0)
-            if (data2 === 0) {
-                turnOffLed(data1);
-            } else {
+            if (data2 !== 0) {
                 turnOnLed(data1, data2);
+            } else {
+                turnOffLed(data1);
             }
             break;
         case 0x80: // Note Off
             turnOffLed(data1);
             break;
-        // You can extend this switch to support Control Change, etc.
         default:
             break;
     }
 });
 
+function handleCC(cc, val) {
+    // --- Brightness faders (CC 3-11) ----------------------
+    if (cc >= 3 && cc <= 11) {
+        const idx = cc - 3;
+        if (idx < LED_COUNT) {
+            ledBrightness[idx] = val / 127;
+            applyLed(idx);
+            ws281xInit.render();
+        }
+        return;
+    }
+
+    // --- Hue knobs (CC 14-22) -----------------------------
+    if (cc >= 14 && cc <= 22) {
+        const idx = cc - 14;
+        if (idx < LED_COUNT) {
+            ledHue[idx] = val / 127; // 0-1
+            applyLed(idx);
+            ws281xInit.render();
+        }
+        return;
+    }
+
+    // --- Toggle buttons (CC 23-31, value 127 on press) ----
+    if (cc >= 23 && cc <= 31 && val === 127) {
+        const idx = cc - 23;
+        const key = `btn_${idx}`;
+        const next = !buttonStates.get(key);
+        buttonStates.set(key, next);
+        if (idx < LED_COUNT) {
+            ledBrightness[idx] = next ? 1 : 0;
+            applyLed(idx);
+            ws281xInit.render();
+        }
+        return;
+    }
+}
+
 function turnOnLed(noteNumber, velocity) {
     const ledIndex = noteNumber % LED_COUNT;
-    // Colour by note (hue) + brightness by velocity
-    const hue = (noteNumber % 12) / 12; // hue 0-1 based on octave note
-    const brightness = velocity / 127; // scale velocity 0-1
-    pixelData[ledIndex] = hsvToRgb(hue, 1, brightness);
+    const hue = (noteNumber % 12) / 12;
+    ledHue[ledIndex] = hue;
+    ledBrightness[ledIndex] = velocity / 127;
+    applyLed(ledIndex);
     ws281xInit.render();
 }
 
 function turnOffLed(noteNumber) {
     const ledIndex = noteNumber % LED_COUNT;
-    pixelData[ledIndex] = 0;
+    ledBrightness[ledIndex] = 0;
+    applyLed(ledIndex);
     ws281xInit.render();
 }
 
