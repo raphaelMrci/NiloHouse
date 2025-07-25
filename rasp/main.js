@@ -114,6 +114,7 @@ console.log(`Controlling ${LED_COUNT} LEDs on GPIO ${GPIO_PIN}`);
 // --- MIDI message handler ----------------------------------
 input.on("message", (deltaTime, message) => {
     const [status, data1, data2] = message;
+    console.log(message);
     const command = status & 0xf0;
 
     switch (command) {
